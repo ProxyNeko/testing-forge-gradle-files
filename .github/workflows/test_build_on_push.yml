@@ -1,0 +1,29 @@
+name: Java CI
+# Trigger the workflow when we push to github or someone makes a PR.
+on: [push, pull_request]
+
+jobs:
+  build:
+    # The OS we run the build on.
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout the repo.
+        uses: actions/checkout@v2
+
+      # https://github.com/actions/setup-java
+      - name: setup Java Dev Kit 8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+          java-package: jdk
+          architecture: x64
+
+        # Fix perms so that things don't error.
+      - name: Fix file permissions.
+        run: chmod a+x gradlew
+
+      - name: Build the mod using gradle.
+        id: build
+        run: ./gradlew clean build

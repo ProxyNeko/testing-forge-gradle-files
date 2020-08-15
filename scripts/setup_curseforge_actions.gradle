@@ -1,0 +1,14 @@
+task setupCurseForgeActions() {
+    doLast {
+        exec {
+            //Log the following properties so the CursePublish.yml action can access and assign them to the builds.
+            commandLine "echo", "##[set-output name=project_id;]${project.project_id}"
+            commandLine "echo", "##[set-output name=mod_id;]${project.mod_id}"
+            commandLine "echo", "##[set-output name=version;]${project.mc_version}-${project.mod_version}"
+            commandLine "echo", "##[set-output name=changelog;]${project.changelog}"
+            commandLine "echo", "##[set-output name=mod_name;]${project.mod_name}"
+            commandLine "echo", "##[set-output name=curse_game_versions;]${project.curse_game_versions}"
+            commandLine "echo", "##[set-output name=release_type;]${project.release_type}"
+        }
+    }
+}

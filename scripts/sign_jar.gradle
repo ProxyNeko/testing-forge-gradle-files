@@ -1,0 +1,98 @@
+task signJar(type: SignJar, dependsOn: reobfJar) {
+    onlyIf {
+        getBooleanProperty('do_sign_jar') &&
+                project.hasProperty('keyStore')
+    }
+
+    description = 'Sign the Main JAR'
+    inputFile = jar.archivePath
+    outputFile = jar.archivePath
+
+    keyStore = project.findProperty('keyStore')
+    alias = project.findProperty('keyStoreAlias')
+    storePass = project.findProperty('keyStorePass')
+    keyPass = project.findProperty('keyStoreKeyPass')
+}
+
+task signApiJar(type: SignJar) {
+    onlyIf {
+        getBooleanProperty('create_api_jar') &&
+                getBooleanProperty('do_sign_jar') &&
+                project.hasProperty('keyStore')
+    }
+
+    description = 'Sign the API JAR'
+    keyStore = project.findProperty('keyStore')
+    alias = project.findProperty('keyStoreAlias')
+    storePass = project.findProperty('keyStorePass')
+    keyPass = project.findProperty('keyStoreKeyPass')
+
+    inputFile = apiJar.archivePath
+    outputFile = apiJar.archivePath
+}
+
+task signDeobfJar(type: SignJar) {
+    onlyIf {
+        getBooleanProperty('create_deobf_jar') &&
+                getBooleanProperty('do_sign_jar') &&
+                project.hasProperty('keyStore')
+    }
+
+    description = 'Sign the deobf JAR'
+    keyStore = project.findProperty('keyStore')
+    alias = project.findProperty('keyStoreAlias')
+    storePass = project.findProperty('keyStorePass')
+    keyPass = project.findProperty('keyStoreKeyPass')
+
+    inputFile = deobfJar.archivePath
+    outputFile = deobfJar.archivePath
+}
+
+task signSourceJar(type: SignJar) {
+    onlyIf {
+        getBooleanProperty('create_source_jar') &&
+                getBooleanProperty('do_sign_jar') &&
+                project.hasProperty('keyStore')
+    }
+
+    description = 'Sign the Sources JAR'
+    keyStore = project.findProperty('keyStore')
+    alias = project.findProperty('keyStoreAlias')
+    storePass = project.findProperty('keyStorePass')
+    keyPass = project.findProperty('keyStoreKeyPass')
+
+    inputFile = sourceJar.archivePath
+    outputFile = sourceJar.archivePath
+}
+
+task signJavadocJar(type: SignJar) {
+    onlyIf {
+        getBooleanProperty('create_javadoc_jar') &&
+                getBooleanProperty('do_sign_jar') &&
+                project.hasProperty('keyStore')
+    }
+
+    keyStore = project.findProperty('keyStore')
+    alias = project.findProperty('keyStoreAlias')
+    storePass = project.findProperty('keyStorePass')
+    keyPass = project.findProperty('keyStoreKeyPass')
+
+    inputFile = javadocJar.archivePath
+    outputFile = javadocJar.archivePath
+}
+
+if (getBooleanProperty('do_sign_jar')) {
+    build.dependsOn signJar
+    if (getBooleanProperty('create_api_jar')) {
+        build.dependsOn signApiJar
+    }
+    if (getBooleanProperty('create_deobf_jar')) {
+        build.dependsOn signDeobfJar
+    }
+    if (getBooleanProperty('create_source_jar')) {
+        build.dependsOn signSourceJar
+    }
+    if (getBooleanProperty('create_javadoc_jar')) {
+        build.dependsOn signJavadocJar
+    }
+}

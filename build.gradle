@@ -1,0 +1,144 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url = "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url = 'https://files.minecraftforge.net/maven'
+        }
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'net.minecraftforge.gradle.common.task.SignJar'
+
+version = project.mod_version
+group = project.group + "." + project.mod_id
+archivesBaseName = project.mod_id
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+sourceSets {
+    api
+    main
+    test
+}
+
+minecraft {
+    mappings channel: project.mappings_channel, version: "${project.mappings_version}-${project.mappings_mc_version}"
+    if (project.hasProperty('at_file')) {
+        accessTransformer = file("src/main/resources/META-INF/${project.at_file}.cfg")
+    }
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', "info"
+            mods.create("${project.mod_id}").source(sourceSets.main)
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', "info"
+            mods.create("${project.mod_id}").source(sourceSets.main)
+        }
+        
+        //Used for Data Generators should you need to use them to create recipes, blockstate files and other resources.
+        data {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'info'
+            args '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/')
+            mods.create("${project.mod_id}").source(sourceSets.main)
+        }
+    }
+}
+
+apply from: 'scripts/dependencies.gradle'
+apply from: 'scripts/setup_curseforge_actions.gradle'
+//apply from: 'scripts/sign_jar.gradle'
+apply from: 'scripts/jar_artifacts.gradle'
+
+jar {
+    manifest {
+        mainAttributes(
+                "Maven-Artifact": "${project.group}:${archivesBaseName}:${project.mod_version}",
+                "Timestamp": System.currentTimeMillis(),
+                "Specification-Title": archivesBaseName,
+                "Specification-Vendor": "${project.mod_author}",
+                "Specification-Version": "1",
+                "Implementation-Title": archivesBaseName,
+                "Implementation-Version": "${project.mod_version}",
+                "Implementation-Vendor": "${project.mod_author}",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "Built-On-Java": "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+                "Built-On": "${project.mc_version}-${project.forge_version}"
+        )
+
+        if (project.hasProperty('core_plugin')) {
+            attributes 'FMLCorePluginContainsFMLMod': 'true'
+            attributes 'FMLCorePlugin': project.core_plugin
+        }
+
+        if (project.hasProperty('mod_at_file')) {
+            attributes 'FMLAT': project.mod_at_file
+        }
+
+        if (project.hasProperty('mod_contained_deps')) {
+            attributes 'ContainedDeps': project.mod_contained_deps
+        }
+    }
+}
+
+tasks.publish.dependsOn build
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId archivesBaseName
+            version project.mod_version
+            from components.java
+            artifact sourcesJar {
+                classifier 'sources'
+            }
+            pom {
+                name = project.mod_id
+                url = project.website_url
+                packaging = 'jar'
+                scm {
+                    connection = "scm:git:git://github.com/" + project.repo + ".git"
+                    developerConnection = "scm:git:git@github.com:" + project.repo + ".git"
+                    url = "https://github.com/" + project.repo
+                }
+                issueManagement {
+                    system = 'github'
+                    url = "https://github.com/" + project.repo + "/issues"
+                }
+                organization {
+                    name = project.org_name
+                    url = project.website_url
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
